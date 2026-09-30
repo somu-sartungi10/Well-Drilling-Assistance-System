@@ -135,7 +135,7 @@ export default function SignIn() {
           <Radio className="size-3.5 text-emerald-400" />
           Streaming rig telemetry · Rig #14 · Dikom, Upper Assam
           <ShieldCheck className="ml-3 size-3.5 text-cyan-500 dark:text-cyan-300" />
-          Runs fully on-device — no data leaves this machine
+          100% On-Premise 
         </div>
       </div>
 
