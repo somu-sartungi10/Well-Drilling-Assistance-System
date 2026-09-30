@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* light theme — slate paper, cyan-600 primary */
+    --background: 210 30% 97%;
+    --foreground: 222 32% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 32% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 32% 10%;
+    --primary: 192 85% 30%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 24% 93%;
+    --secondary-foreground: 222 24% 20%;
+    --muted: 214 24% 94%;
+    --muted-foreground: 215 15% 42%;
+    --accent: 190 55% 93%;
+    --accent-foreground: 192 80% 26%;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 20% 86%;
+    --input: 214 20% 82%;
+    --ring: 192 85% 34%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* dark theme — deep slate, cyan-400 primary */
+    --background: 220 24% 5%;
+    --foreground: 210 30% 96%;
+    --card: 220 22% 8%;
+    --card-foreground: 210 30% 96%;
+    --popover: 220 22% 8%;
+    --popover-foreground: 210 30% 96%;
+    --primary: 187 92% 55%;
+    --primary-foreground: 200 45% 7%;
+    --secondary: 220 18% 14%;
+    --secondary-foreground: 210 25% 90%;
+    --muted: 220 18% 13%;
+    --muted-foreground: 215 15% 62%;
+    --accent: 189 55% 13%;
+    --accent-foreground: 187 80% 66%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 30% 98%;
+    --border: 220 15% 16%;
+    --input: 220 15% 18%;
+    --ring: 187 92% 55%;
+  }
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: "Inter Variable", "Inter", system-ui, sans-serif;
+  font-size: 14px;
+}
+
+/* thin scrollbars that adapt to theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* ─── Leaflet: dark basemap in both UI themes (map stays dark, by design) ─── */
+.leaflet-container {
+  background: #0a0e13;
+  font-family: inherit;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+}
+.leaflet-popup-content {
+  margin: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: hsl(var(--muted-foreground));
+}
+.leaflet-control-zoom a {
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.leaflet-bar {
+  border: 1px solid hsl(var(--border)) !important;
+}
+
+/* typewriter cursor for the copilot */
+.stream-cursor::after {
+  content: "▍";
+  animation: blink 1s steps(1) infinite;
+  color: hsl(var(--primary));
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* subtle grid backdrop for hero panels */
+.grid-backdrop {
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
