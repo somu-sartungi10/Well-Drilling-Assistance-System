@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Circle, MapContainer, Marker, Popup, TileLayer, Tooltip as LTooltip, useMap } from "react-leaflet"
 import L from "leaflet"
-import { ArrowDownUp, MapPin, Ruler } from "lucide-react"
+import { ArrowDownUp, Layers, MapPin, Navigation, Ruler, Satellite } from "lucide-react"
 import { cn } from "cn"
 import { useAppStore } from "@/store/useAppStore"
 import { ACTIVE_WELL } from "@/data/wells"
@@ -40,6 +40,27 @@ function distanceOf(well: Well): number {
     Math.cos(toRad(ACTIVE_WELL.lat)) * Math.cos(toRad(well.lat)) * Math.sin(dLon / 2) ** 2
   return 2 * R * Math.asin(Math.sqrt(a))
 }
+
+// ─── Basemaps: Esri ArcGIS Online tiles — real maps, no API key ─────────────
+// CARTO's CDN started serving "API key required" placeholder PNGs to anonymous
+// traffic (verified: identical tiles for London & New York), so the basemap is
+// Esri World_Imagery / Dark Gray Canvas — keyless and genuinely location-aware.
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services"
+const BASEMAPS = {
+  satellite: {
+    label: "Satellite",
+    url: `${ESRI}/World_Imagery/MapServer/tile/{z}/{y}/{x}`,
+    labels: `${ESRI}/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}`,
+    attribution: "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics",
+  },
+  dark: {
+    label: "Dark",
+    url: `${ESRI}/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}`,
+    labels: `${ESRI}/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}`,
+    attribution: "Tiles &copy; Esri — Esri, DeLorme, NAVTEQ",
+  },
+} as const
+type BasemapKey = keyof typeof BASEMAPS
 
 // custom divIcon markers colored by status with risk ring
 function wellIcon(color: string, severe: boolean, selected: boolean) {
@@ -80,6 +101,19 @@ function MapController({ markersRef }: { markersRef: React.RefObject<Map<string,
   return null
 }
 
+/** Recenter + invalidate size once after mount (fixes layout-shift blank tiles). */
+function MapReady() {
+  const map = useMap()
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      map.invalidateSize()
+      map.setView([ACTIVE_WELL.lat, ACTIVE_WELL.lon], 11)
+    }, 150)
+    return () => window.clearTimeout(t)
+  }, [map])
+  return null
+}
+
 export default function MapScreen() {
   const radiusKm = useAppStore((s) => s.radiusKm)
   const setRadiusKm = useAppStore((s) => s.setRadiusKm)
@@ -89,6 +123,7 @@ export default function MapScreen() {
   const toggleComparison = useAppStore((s) => s.toggleComparisonWell)
 
   const [sortBy, setSortBy] = useState<"relevance" | "distance">("relevance")
+  const [basemap, setBasemap] = useState<BasemapKey>("satellite")
   const markersRef = useRef<Map<string, L.Marker>>(new Map())
 
   const base = useMemo(() => nearbyWells(radiusKm), [radiusKm])
@@ -119,7 +154,7 @@ export default function MapScreen() {
         title="Nearby Wells Map"
         subtitle="Offset-well intelligence filtered by radius around the active well"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {/* sort toggle */}
             <div className="flex overflow-hidden rounded-lg border border-border">
               {(["relevance", "distance"] as const).map((s) => (
@@ -127,38 +162,37 @@ export default function MapScreen() {
                   key={s}
                   onClick={() => setSortBy(s)}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-2 text-xs font-semibold capitalize transition-colors",
-                    sortBy === s ? "bg-cyan-500/15 text-cyan-300" : "bg-card text-muted-foreground hover:text-foreground",
+                    "flex items-center gap-1.5 whitespace-nowrap px-3 py-2 text-xs font-semibold capitalize transition-colors",
+                    sortBy === s ? "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300" : "bg-card text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {s === "relevance" ? <ArrowDownUp className="size-3.5" /> : <Ruler className="size-3.5" />}
-                  {s}
+                  <span className="hidden sm:inline">{s}</span>
                 </button>
               ))}
             </div>
             {/* radius */}
-            <div className="flex w-56 items-center gap-3 rounded-lg border border-border bg-card px-3 py-2">
-              <Ruler className="size-4 text-muted-foreground" />
+            <div className="flex w-44 items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 sm:w-56">
+              <Ruler className="size-4 shrink-0 text-muted-foreground" />
               <Slider value={[radiusKm]} min={2} max={30} step={1} onValueChange={(v) => setRadiusKm(v[0])} className="flex-1" />
-              <span className="w-12 text-right font-mono text-xs tabular-nums text-cyan-300">{radiusKm} km</span>
+              <span className="w-12 shrink-0 text-right font-mono text-xs tabular-nums text-cyan-600 dark:text-cyan-300">{radiusKm} km</span>
             </div>
           </div>
         }
       />
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* Map */}
-        <div className="relative min-w-0 flex-1">
+        <div className="relative h-[46vh] min-h-[320px] shrink-0 lg:h-auto lg:min-h-0 lg:flex-1">
           <MapContainer
             center={[ACTIVE_WELL.lat, ACTIVE_WELL.lon]}
             zoom={11}
-            className="h-full w-full"
+            className="z-0 h-full w-full"
             scrollWheelZoom
           >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
+            <TileLayer key={basemap} attribution={BASEMAPS[basemap].attribution} url={BASEMAPS[basemap].url} />
+            <TileLayer key={`${basemap}-labels`} url={BASEMAPS[basemap].labels} />
+            <MapReady />
             <MapController markersRef={markersRef} />
             {/* radius circle */}
             <Circle
@@ -206,8 +240,8 @@ export default function MapScreen() {
                       <br />
                       TD {fmt(w.tdM)} · spud {w.spudDate}
                       <br />
-                      <span style={{ color: "#22d3ee", fontWeight: 700 }}>Relevance {rel.score}/100</span>
-                      <span style={{ color: "#94a3b8" }}> — {rel.why}</span>
+                      <span style={{ color: "#0891b2", fontWeight: 700 }}>Relevance {rel.score}/100</span>
+                      <span style={{ color: "#64748b" }}> — {rel.why}</span>
                       <br />
                       <button
                         onClick={() => {
@@ -219,7 +253,7 @@ export default function MapScreen() {
                           marginTop: 6,
                           padding: "4px 10px",
                           borderRadius: 6,
-                          background: "#22d3ee",
+                          background: "#06b6d4",
                           color: "#04202c",
                           fontWeight: 600,
                           fontSize: 11,
@@ -236,25 +270,64 @@ export default function MapScreen() {
             })}
           </MapContainer>
 
-          {/* legend overlay */}
-          <div className="absolute bottom-4 left-4 z-[500] rounded-lg border border-border bg-card/95 p-3 text-[10px] shadow-xl backdrop-blur">
-            <div className="mb-1.5 font-bold uppercase tracking-wider text-muted-foreground">Status</div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          {/* map header strip: rig context + basemap switch */}
+          <div className="pointer-events-none absolute left-3 top-3 z-[500] flex max-w-[calc(100%-90px)] items-start gap-2">
+            <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-border bg-card/95 px-3 py-2 shadow-xl backdrop-blur">
+              <span className="relative flex size-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
+              </span>
+              <div className="leading-tight">
+                <div className="text-xs font-bold">{ACTIVE_WELL.name}</div>
+                <div className="text-[10px] text-muted-foreground">
+                  {ACTIVE_WELL.field} · Rig {ACTIVE_WELL.rigName}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* basemap toggle */}
+          <div className="absolute right-3 top-3 z-[500] flex overflow-hidden rounded-lg border border-border shadow-xl">
+            {(
+              [
+                { k: "satellite", icon: Satellite },
+                { k: "dark", icon: Layers },
+              ] as const
+            ).map(({ k, icon: Icon }) => (
+              <button
+                key={k}
+                onClick={() => setBasemap(k)}
+                title={`${BASEMAPS[k].label} basemap`}
+                className={cn(
+                  "flex items-center gap-1.5 bg-card/95 px-2.5 py-2 text-[10px] font-semibold backdrop-blur transition-colors",
+                  basemap === k ? "text-cyan-600 dark:text-cyan-300" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Icon className="size-3.5" />
+                <span className="hidden md:inline">{BASEMAPS[k].label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* legend overlay — compact horizontal strip */}
+          <div className="absolute bottom-3 left-3 right-3 z-[500] sm:right-auto">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border bg-card/95 px-3 py-2 text-[10px] shadow-xl backdrop-blur">
+              <span className="font-bold uppercase tracking-wider text-muted-foreground">Status</span>
               {Object.entries(STATUS_META).map(([k, v]) => (
-                <div key={k} className="flex items-center gap-1.5">
+                <span key={k} className="flex items-center gap-1 whitespace-nowrap">
                   <span className="size-2 rounded-full" style={{ background: v.color }} />
                   {v.label}
-                </div>
+                </span>
               ))}
-            </div>
-            <div className="mt-2 border-t border-border pt-1.5 text-muted-foreground">
-              Ringed = critical history · cyan halo = selected
+              <span className="hidden items-center gap-1 border-l border-border pl-3 text-muted-foreground md:flex">
+                <Navigation className="size-3" /> ringed = critical history
+              </span>
             </div>
           </div>
         </div>
 
         {/* Side list */}
-        <aside className="w-80 shrink-0 space-y-2 overflow-y-auto border-l border-border bg-card p-3">
+        <aside className="min-h-0 w-full shrink-0 space-y-2 overflow-y-auto border-t border-border bg-card p-3 lg:w-96 lg:border-l lg:border-t-0">
           <div className="px-1 pb-1 text-xs font-semibold text-muted-foreground">
             {wells.length} wells within {radiusKm} km · sorted by {sortBy}
           </div>
@@ -287,7 +360,7 @@ export default function MapScreen() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span
-                      className="rounded bg-cyan-500/15 px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-cyan-300"
+                      className="rounded bg-cyan-500/15 px-1.5 py-0.5 font-mono text-[10px] font-bold tabular-nums text-cyan-600 dark:text-cyan-300"
                       title={`Relevance: ${rel.why}`}
                     >
                       {rel.score}

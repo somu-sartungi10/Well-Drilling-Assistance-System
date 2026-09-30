@@ -4,6 +4,47 @@ import type { Alert, ChatMessage } from "@/data/types"
 
 export type ScreenId = "command" | "map" | "well" | "knowledge" | "documents"
 export type Theme = "dark" | "light"
+export type Role = "drilling-engineer" | "toolpusher" | "geologist" | "viewer"
+
+export interface UserProfile {
+  name: string
+  email: string
+  role: Role
+  field: string
+  rig: string
+  avatarInitials: string
+  signedInAt: number
+}
+
+export const ROLE_LABELS: Record<Role, string> = {
+  "drilling-engineer": "Drilling Engineer",
+  toolpusher: "Tool Pusher",
+  geologist: "Wellsite Geologist",
+  viewer: "Viewer (read-only)",
+}
+
+/** Local operator profile — prototype has no backend, so identity is stored
+ *  on-device only (localStorage), keeping the 100%-client-side guarantee. */
+const LS_USER = "nwis.user"
+const LS_THEME = "nwis.theme"
+
+function loadUser(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(LS_USER)
+    return raw ? (JSON.parse(raw) as UserProfile) : null
+  } catch {
+    return null
+  }
+}
+
+function loadTheme(): Theme {
+  try {
+    const t = localStorage.getItem(LS_THEME)
+    return t === "light" ? "light" : "dark"
+  } catch {
+    return "dark"
+  }
+}
 
 interface AlertRule {
   key: string
@@ -21,6 +62,11 @@ interface AppState {
   toggleSidebar: () => void
   theme: Theme
   setTheme: (t: Theme) => void
+
+  // auth (local operator profile — see loadUser)
+  user: UserProfile | null
+  signIn: (u: Omit<UserProfile, "signedInAt" | "avatarInitials">) => void
+  signOut: () => void
 
   // map / proximity
   radiusKm: number
@@ -101,8 +147,23 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   sidebarCollapsed: false,
   toggleSidebar: () => set((st) => ({ sidebarCollapsed: !st.sidebarCollapsed })),
-  theme: "dark",
+  theme: loadTheme(),
   setTheme: (t) => set({ theme: t }),
+
+  user: loadUser(),
+  signIn: (u) =>
+    set({
+      user: {
+        ...u,
+        avatarInitials: u.name
+          .split(/\s+/)
+          .map((p) => p[0]?.toUpperCase() ?? "")
+          .slice(0, 2)
+          .join("") || "OP",
+        signedInAt: Date.now(),
+      },
+    }),
+  signOut: () => set({ user: null }),
 
   radiusKm: 10,
   setRadiusKm: (r) => set({ radiusKm: r }),
@@ -210,6 +271,21 @@ export const useAppStore = create<AppState>((set, get) => ({
       messages: st.messages.map((m) => (m.id === id ? { ...m, streaming: false } : m)),
     })),
 }))
+
+// persistence: keep the operator profile + theme across reloads (device-local)
+if (typeof window !== "undefined") {
+  useAppStore.subscribe((st, prev) => {
+    try {
+      if (st.user !== prev.user) {
+        if (st.user) localStorage.setItem(LS_USER, JSON.stringify(st.user))
+        else localStorage.removeItem(LS_USER)
+      }
+      if (st.theme !== prev.theme) localStorage.setItem(LS_THEME, st.theme)
+    } catch {
+      /* storage unavailable — persistence is best-effort */
+    }
+  })
+}
 
 // dev/demo hook: allows console + demo scripting to drive the app state
 if (typeof window !== "undefined") {

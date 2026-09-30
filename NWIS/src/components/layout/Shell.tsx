@@ -1,10 +1,12 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import {
   Activity,
   Bell,
   BookOpen,
+  ChevronsUpDown,
   FileText,
   Gauge,
+  LogOut,
   Map,
   Moon,
   Network,
@@ -17,7 +19,7 @@ import {
   X,
 } from "lucide-react"
 import { cn } from "cn"
-import { useAppStore, type ScreenId } from "@/store/useAppStore"
+import { useAppStore, ROLE_LABELS, type ScreenId } from "@/store/useAppStore"
 import { useLiveSimulation } from "@/hooks/useLiveSimulation"
 import { ACTIVE_WELL } from "@/data/wells"
 import { FORMATION_BY_ID } from "@/data/formations"
@@ -56,6 +58,9 @@ export default function Shell() {
   const dismissToast = useAppStore((s) => s.dismissToast)
   const rop = useAppStore((s) => s.rop)
   const mw = useAppStore((s) => s.mwPpg)
+  const user = useAppStore((s) => s.user)
+  const signOut = useAppStore((s) => s.signOut)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   const formationId =
     liveDepth >= 2995 ? "barail" : liveDepth >= 2225 ? "surma" : liveDepth >= 1265 ? "tipam" : "girujan"
@@ -200,6 +205,62 @@ export default function Shell() {
                 <span className="absolute -right-1.5 -top-1.5 grid size-4 place-items-center rounded-full bg-destructive text-[9px] font-bold text-destructive-foreground">
                   {unack}
                 </span>
+              )}
+            </div>
+            {/* operator profile menu */}
+            <div className="relative">
+              <button
+                onClick={() => setProfileOpen((o) => !o)}
+                className="flex items-center gap-2 rounded-lg border border-border py-1 pl-1 pr-2 transition-colors hover:border-cyan-500/40"
+                title="Operator profile"
+              >
+                <span className="grid size-6 place-items-center rounded-md bg-cyan-500/15 text-[10px] font-bold text-cyan-600 dark:text-cyan-300">
+                  {user?.avatarInitials ?? "OP"}
+                </span>
+                <span className="hidden max-w-28 truncate text-xs font-medium md:block">{user?.name}</span>
+                <ChevronsUpDown className="size-3 text-muted-foreground" />
+              </button>
+              {profileOpen && (
+                <>
+                  <div className="fixed inset-0 z-[900]" onClick={() => setProfileOpen(false)} />
+                  <div className="absolute right-0 top-full z-[910] mt-1.5 w-64 rounded-xl border border-border bg-popover p-3 shadow-2xl">
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid size-10 place-items-center rounded-lg bg-cyan-500/15 text-sm font-bold text-cyan-600 dark:text-cyan-300">
+                        {user?.avatarInitials}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold">{user?.name}</div>
+                        <div className="truncate text-[11px] text-muted-foreground">{user?.email}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1 rounded-lg bg-secondary/60 p-2 text-[11px]">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Role</span>
+                        <span className="font-medium">{user ? ROLE_LABELS[user.role] : "—"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Field</span>
+                        <span className="font-medium">{user?.field}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Rig</span>
+                        <span className="font-medium">{user?.rig}</span>
+                      </div>
+                    </div>
+                    <div className="mt-2 border-t border-border pt-2 text-[10px] text-muted-foreground">
+                      Local profile · stored on this device only
+                    </div>
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false)
+                        signOut()
+                      }}
+                      className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-destructive/40 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
+                    >
+                      <LogOut className="size-3.5" /> Sign out
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>
