@@ -16,7 +16,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; className?: 
 
   componentDidCatch(error: Error, info: unknown) {
     // surfaced in the UI; also visible in devtools
-    console.error("NWIS panel crashed:", error, info)
+    console.error("STRAT panel crashed:", error, info)
   }
 
   render() {
@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; className?: 
             <AlertTriangle className="mx-auto size-8 text-destructive" />
             <div className="mt-3 text-sm font-semibold">This panel hit a snag</div>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              The rest of NWIS is still running. Reload the panel to try again.
+              The rest of STRAt is still running. Reload the panel to try again.
             </p>
             <pre className="mt-3 max-h-24 overflow-auto rounded bg-secondary/60 p-2 text-left text-[10px] text-muted-foreground">
               {this.state.error.message}

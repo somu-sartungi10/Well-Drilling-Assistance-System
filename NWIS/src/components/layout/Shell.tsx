@@ -95,7 +95,7 @@ export default function Shell() {
           {!sidebarCollapsed && (
             <div className="min-w-0">
               <div className="text-sm font-bold tracking-tight">
-                NWI<span className="text-cyan-400 dark:text-cyan-300">S</span>
+                STRAT<span className="text-cyan-400 dark:text-cyan-300"></span>
               </div>
               <div className="truncate text-[10px] text-muted-foreground">Nearby Wells Intelligence</div>
             </div>
