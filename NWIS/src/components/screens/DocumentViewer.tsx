@@ -183,7 +183,7 @@ export function WellDocumentViewer({ wellId }: { wellId: string }) {
                 <ExtractedFieldRow key={f.label} docId={doc.id} label={f.label} value={f.value} confidence={f.confidence} />
               ))}
               <div className="pt-1 text-[10px] leading-relaxed text-muted-foreground">
-                ✓ accept pushes the field into the NWIS knowledge graph · ✎ edit corrects an OCR misread · ✕ reject removes it from the corpus.
+                ✓ accept pushes the field into the STRAT knowledge graph · ✎ edit corrects an OCR misread · ✕ reject removes it from the corpus.
               </div>
             </div>
           </div>
