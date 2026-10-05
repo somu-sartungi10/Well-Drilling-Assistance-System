@@ -23,7 +23,7 @@ const ROLES: Role[] = ["drilling-engineer", "toolpusher", "geologist", "viewer"]
 const FEATURES = [
   { icon: Gauge, title: "Command Center", text: "Live depth, ROP & mud-weight with predictive risk outlook" },
   { icon: MapIcon, title: "Nearby Wells Map", text: "Offset intelligence ranked by relevance around the rig" },
-  { icon: BrainCircuit, title: "NWIS Copilot", text: "Cited answers from every DDR, WCR & lesson learned" },
+  { icon: BrainCircuit, title: "STRAT Copilot", text: "Cited answers from every DDR, WCR & lesson learned" },
   { icon: BellRing, title: "Proactive Alerts", text: "Fires before the bit enters a historical incident zone" },
 ] as const
 
@@ -98,7 +98,7 @@ export default function SignIn() {
           </div>
           <div>
             <div className="text-base font-bold tracking-tight">
-              NWI<span className="text-cyan-500 dark:text-cyan-300">S</span>
+              STRAT<span className="text-cyan-500 dark:text-cyan-300">AI</span>
             </div>
             <div className="text-[11px] text-muted-foreground">Nearby Wells Intelligence System</div>
           </div>
@@ -114,7 +114,7 @@ export default function SignIn() {
               <span className="text-cyan-500 dark:text-cyan-300"> drilling floor</span>
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              NWIS turns decades of offset-well history — every kick, loss and stuck-pipe report — into
+              STRAT turns decades of offset-well history — every kick, loss and stuck-pipe report — into
               live, cited guidance for the well that's drilling right now:{" "}
               <b className="text-foreground">{ACTIVE_WELL.name}</b>, {ACTIVE_WELL.field} field.
             </p>
@@ -135,7 +135,7 @@ export default function SignIn() {
           <Radio className="size-3.5 text-emerald-400" />
           Streaming rig telemetry · Rig #14 · Dikom, Upper Assam
           <ShieldCheck className="ml-3 size-3.5 text-cyan-500 dark:text-cyan-300" />
-          Runs fully on-device — no data leaves this machine
+          100% On-Premise 
         </div>
       </div>
 
@@ -148,7 +148,7 @@ export default function SignIn() {
               <Activity className="size-5" />
             </div>
             <div className="text-sm font-bold">
-              NWI<span className="text-cyan-500 dark:text-cyan-300">S</span>
+              STRAT<span className="text-cyan-500 dark:text-cyan-300">AI</span>
             </div>
           </div>
 
